@@ -1,6 +1,9 @@
 # auto_BBDown
 使用docker进行b站视频自动下载
 
+下载部分使用：https://github.com/nilaoda/BBDown
+参考项目：https://github.com/LJason77/bilibili-webhook
+
 ## 使用步骤：
 ```shell
 - cd ~
