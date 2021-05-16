@@ -39,6 +39,8 @@ class TestLog(object):
 
 class auto_bbdown():
     def __init__(self):
+        if not os.path.exists(r'/app/config/log'):
+            os.mkdir(r'/app/config/log')
         self.abs_path = self.get_py_path()
         # self.log = TestLog(self.abs_path,'auto_bbdown.log').getlog()
         self.log = TestLog(r'/app/config/log','auto_bbdown.log').getlog()

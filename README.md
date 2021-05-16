@@ -10,5 +10,5 @@
 修改config文件夹中的config.ini
 ```shell
 - docker build -t bbdown .
-- docker run --restart=unless-stopped --name bbdown -itd -v ~/auto_bbdown/config:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads bbdown
+- docker run --restart=unless-stopped --name bbdown -itd -v ${PWD}/config:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads bbdown
 ```
