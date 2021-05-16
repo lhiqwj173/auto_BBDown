@@ -60,6 +60,7 @@ class auto_bbdown():
         self.log.info('读取设置')
         self.conf = self.read_config()
         sleep_time = int(self.conf.get("common", "sleep_time"))
+        self.log.info('休眠时间：{}'.format(sleep_time))
         while True:
             if self.check_time():
                 self.log.info('开始下载')
@@ -90,10 +91,11 @@ class auto_bbdown():
 
     def check_time(self):
         run_time = self.conf.get("common", "run_time")
+        self.log.info('运行时间设定：{}'.format(run_time))
         if ',' in run_time:
             run_time_list = run_time.split(',')
         elif 'all' == run_time or 'ALL' == run_time:
-            run_time_list = ['00:00-24:00']
+            run_time_list = ['00:00-23:59']
         else:
             run_time_list = [run_time]
 
