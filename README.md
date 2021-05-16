@@ -4,5 +4,6 @@
 ```shell
 - git clone https://github.com/lhiqwj173/auto_BBDown.git
 - cd auto_BBDown
+- mkdir config
 
 ```
