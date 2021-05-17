@@ -1,5 +1,7 @@
 # auto_BBDown
 使用docker进行b站视频自动下载
+订阅rsshub关于哔哩哔哩，然后进行愉快的下载
+https://docs.rsshub.app/social-media.html#bilibili
 
 下载部分使用：https://github.com/nilaoda/BBDown
 参考项目：https://github.com/LJason77/bilibili-webhook
