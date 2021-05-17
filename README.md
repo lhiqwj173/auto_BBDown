@@ -21,6 +21,8 @@ docker build -t bbdown .
 ```shell
 docker run --name bbdown -itd -v ${PWD}/config:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads bbdown
 ```
+## 日志：
+~/auto_BBDown/config/log/
 
 
 ## docker 命令提示：
