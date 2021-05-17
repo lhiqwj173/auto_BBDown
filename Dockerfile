@@ -1,4 +1,5 @@
-FROM mengkevin/python:3.8-slim-buster
+FROM python:3.8-slim-buster
+#FROM mengkevin/python:3.8-slim-buster
 
 LABEL maintainer="lhiiqwj"
 
