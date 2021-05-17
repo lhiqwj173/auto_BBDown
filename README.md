@@ -6,12 +6,42 @@
 
 ## 使用步骤：
 ```shell
-- cd ~
-- git clone https://github.com/lhiqwj173/auto_BBDown.git
-- cd auto_BBDown
+cd ~
+```
+```shell
+git clone https://github.com/lhiqwj173/auto_BBDown.git
+```
+```shell
+cd auto_BBDown
 ```
 修改config文件夹中的config.ini
 ```shell
-- docker build -t bbdown .
-- docker run --name bbdown -itd -v ${PWD}/config:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads bbdown
+docker build -t bbdown .
+```
+```shell
+docker run --name bbdown -itd -v ${PWD}/config:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads bbdown
+```
+
+
+docker 命令提示
+
+停止容器
+```shell
+docker stop bbdown
+```
+删除容器
+```shell
+docker rm bbdown
+```
+删除无用镜像
+```shell
+docker image rm $(docker image ls -a -q)
+```
+进入容器
+```shell
+docker exec -it bbdown /bin/bash
+```
+删除项目目录
+```shell
+rm -rf ~/auto_BBDown/
 ```
