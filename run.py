@@ -52,15 +52,18 @@ class auto_bbdown():
             if '.log' in i:
                 log_txt = re.search(r'\d{4}_\d{2}_\d{2}', i).group(0)
                 log_date = datetime.datetime.strptime(log_txt, '%Y_%m_%d')
+                self.log.debug('log_date:{}'.format(log_date))
                 if log_date < five_day:
                     # log_path = os.path.join(self.abs_path, i)
                     log_path = os.path.join(r'/app/config/log', i)
+                    self.log.debug('del_log:{}'.format(log_path))
                     os.remove(log_path)
 
         self.log.info('读取设置')
         self.conf = self.read_config()
+        self.log.debug('config_info:{}'.format(self.conf))
         sleep_time = int(self.conf.get("common", "sleep_time"))
-        self.log.info('休眠时间：{}'.format(sleep_time))
+        self.log.debug('休眠时间：{}'.format(sleep_time))
         while True:
             if self.check_time():
                 self.log.info('开始下载')
@@ -94,17 +97,18 @@ class auto_bbdown():
 
     def check_time(self):
         run_time = self.conf.get("common", "run_time")
-        self.log.info('运行时间设定：{}'.format(run_time))
         if ',' in run_time:
             run_time_list = run_time.split(',')
         elif 'all' == run_time or 'ALL' == run_time:
             run_time_list = ['00:00-23:59']
         else:
             run_time_list = [run_time]
-
+        self.log.debug('运行时间设定：{}'.format(str(run_time_list)))
         n_time = datetime.datetime.now()
+        self.log.debug('now_time：{}'.format(n_time))
         for i in run_time_list:
             l = i.split('-')
+            self.log.debug('str(l)')
             time_b = datetime.datetime.strptime(str(datetime.datetime.now().date()) + l[0].replace("'",''), '%Y-%m-%d%H:%M')
             time_e = datetime.datetime.strptime(str(datetime.datetime.now().date()) + l[1].replace("'",''), '%Y-%m-%d%H:%M')
             if time_b < n_time < time_e:
