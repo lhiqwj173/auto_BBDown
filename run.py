@@ -77,7 +77,7 @@ class auto_bbdown():
 
     def read_config(self,path: str = ''):
         if not path:
-            path = os.path.join(self.abs_path, 'config.ini')
+            path = os.path.join(r'/app/config', 'config.ini')
         if os.path.exists(path):
             conf = configparser.ConfigParser()
             try:
@@ -86,7 +86,7 @@ class auto_bbdown():
                 conf.read(path, encoding="utf-8")
             return conf
         else:
-            print("[-]Config file not found!")
+            self.log.info("Config file not found!")
             sys.exit(2)
 
     def check_time(self):
