@@ -10,14 +10,14 @@ import re
 
 class TestLog(object):
     def __init__(self,log_path,log_name, logger=None):
-        self.logger = logging.getLogger(logger)
-        self.logger.setLevel(logging.DEBUG)
+        logger = logging.getLogger(logger)
+        logger.setLevel(logging.DEBUG)
 
-        self.log_time = time.strftime("%Y_%m_%d_")
-        self.log_path = log_path
-        self.log_name = os.path.join(self.log_path, self.log_time + log_name)
+        log_time = time.strftime("%Y_%m_%d_")
+        log_path = log_path
+        log_name = os.path.join(log_path, log_time + log_name)
 
-        fh = logging.FileHandler(self.log_name, 'a', encoding='utf-8')  # 这个是python3的
+        fh = logging.FileHandler(log_name, 'a', encoding='utf-8')  # 这个是python3的
         fh.setLevel(logging.INFO)
 
         ch = logging.StreamHandler()
@@ -29,44 +29,56 @@ class TestLog(object):
 
         fh.setFormatter(formatter)
         ch.setFormatter(formatter)
-        self.logger.addHandler(fh)
-        self.logger.addHandler(ch)
+        logger.addHandler(fh)
+        logger.addHandler(ch)
         fh.close()
         ch.close()
 
     def getlog(self):
-        return self.logger
+        return logger
+
+if not os.path.exists(r'/app/config/log'):
+    os.mkdir(r'/app/config/log')
+
+log = TestLog(r'/app/config/log','auto_bbdown.log').getlog()
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+sys.excepthook = handle_exception
 
 class auto_bbdown():
     def __init__(self):
-        if not os.path.exists(r'/app/config/log'):
-            os.mkdir(r'/app/config/log')
-        self.abs_path = self.get_py_path()
-        # self.log = TestLog(self.abs_path,'auto_bbdown.log').getlog()
-        self.log = TestLog(r'/app/config/log','auto_bbdown.log').getlog()
+        #self.abs_path = self.get_py_path()
+        # log = TestLog(self.abs_path,'auto_bbdown.log').getlog()
+
         # 删除5天前的日志
-        self.log.info('清理日志')
+        log.info('清理日志')
         five_day = datetime.datetime.now() - datetime.timedelta(days=5)
         # for i in os.listdir(self.abs_path):
         for i in os.listdir(r'/app/config/log'):
             if '.log' in i:
                 log_txt = re.search(r'\d{4}_\d{2}_\d{2}', i).group(0)
                 log_date = datetime.datetime.strptime(log_txt, '%Y_%m_%d')
-                self.log.debug('log_date:{}'.format(log_date))
+                log.debug('log_date:{}'.format(log_date))
                 if log_date < five_day:
                     # log_path = os.path.join(self.abs_path, i)
                     log_path = os.path.join(r'/app/config/log', i)
-                    self.log.debug('del_log:{}'.format(log_path))
+                    log.debug('del_log:{}'.format(log_path))
                     os.remove(log_path)
 
-        self.log.info('读取设置')
+        log.info('读取设置')
         self.conf = self.read_config()
-        self.log.debug('config_info:{}'.format(self.conf))
+        log.debug('config_info:{}'.format(self.conf))
         sleep_time = int(self.conf.get("common", "sleep_time"))
-        self.log.debug('休眠时间：{}'.format(sleep_time))
+        log.debug('休眠时间：{}'.format(sleep_time))
         while True:
             if self.check_time():
-                self.log.info('开始下载')
+                log.info('开始下载')
                 self.rss_data = self.get_rss_data()
                 if not self.rss_data:
                     time.sleep(sleep_time)
@@ -76,7 +88,7 @@ class auto_bbdown():
                 self.download()
                 time.sleep(sleep_time)
             else:
-                self.log.info('等待')
+                log.info('等待')
                 time.sleep(sleep_time)
     def get_py_path(self):
         return os.path.split(os.path.abspath(__file__))[0]
@@ -92,7 +104,7 @@ class auto_bbdown():
                 conf.read(path, encoding="utf-8")
             return conf
         else:
-            self.log.info("Config file not found!")
+            log.info("Config file not found!")
             sys.exit(2)
 
     def check_time(self):
@@ -103,12 +115,12 @@ class auto_bbdown():
             run_time_list = ['00:00-23:59']
         else:
             run_time_list = [run_time]
-        self.log.debug('运行时间设定：{}'.format(str(run_time_list)))
+        log.debug('运行时间设定：{}'.format(str(run_time_list)))
         n_time = datetime.datetime.now()
-        self.log.debug('now_time：{}'.format(n_time))
+        log.debug('now_time：{}'.format(n_time))
         for i in run_time_list:
             l = i.split('-')
-            self.log.debug('str(l)')
+            log.debug('str(l)')
             time_b = datetime.datetime.strptime(str(datetime.datetime.now().date()) + l[0].replace("'",''), '%Y-%m-%d%H:%M')
             time_e = datetime.datetime.strptime(str(datetime.datetime.now().date()) + l[1].replace("'",''), '%Y-%m-%d%H:%M')
             if time_b < n_time < time_e:
@@ -122,7 +134,7 @@ class auto_bbdown():
         url = self.conf.get("common", "rss")
         result = requests.get(str(url))
         if 200 != result.status_code:
-            self.log.info('请求异常')
+            log.info('请求异常')
             return None
         r = result.content
         DOMTree = parseString(r)
@@ -130,7 +142,7 @@ class auto_bbdown():
         VariationChilds = collection.getElementsByTagName("item")
         # 进行遍历取值
         for VariationChild in VariationChilds:
-            self.log.info('=' * 30)
+            log.info('=' * 30)
             title = VariationChild.getElementsByTagName('title')[0].childNodes[0].data
 
             link = VariationChild.getElementsByTagName('link')[0].childNodes[0].data
@@ -140,9 +152,9 @@ class auto_bbdown():
 
             dict[title] = link
 
-            self.log.info(title)
-            self.log.info(link)
-            self.log.info(author)
+            log.info(title)
+            log.info(link)
+            log.info(author)
 
         return dict
 
@@ -161,7 +173,7 @@ class auto_bbdown():
         for i in self.local_data:
             if i not in self.rss_data:
                 file_path = os.path.join(path,i)
-                self.log.info('删除文件:{}'.format(file_path))
+                log.info('删除文件:{}'.format(file_path))
                 shutil.rmtree(file_path)
 
     def download(self):
@@ -172,7 +184,7 @@ class auto_bbdown():
         for i in self.rss_data:
             if i not in self.local_data:
                 link = self.rss_data[i]
-                self.log.info('下载:{}'.format(i))
+                log.info('下载:{}'.format(i))
                 command = str(BBDown_path) + ' -p ALL "' + str(link) + '"'
                 print(command)
                 self.run_cmd(command)
