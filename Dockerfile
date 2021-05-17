@@ -18,4 +18,4 @@ RUN apt-get update && apt-get install -y ffmpeg wget && \
         rm -rf /var/lib/apt/lists/*
 VOLUME ["/app/config", "/app/downloads"]
 
-CMD ["python", "run.py"]
+#CMD ["python", "run.py"]
