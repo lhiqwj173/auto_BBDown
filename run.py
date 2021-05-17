@@ -65,6 +65,9 @@ class auto_bbdown():
             if self.check_time():
                 self.log.info('开始下载')
                 self.rss_data = self.get_rss_data()
+                if not self.rss_data:
+                    time.sleep(sleep_time)
+                    continue
                 self.local_data = self.get_local_data()
                 self.del_items()
                 self.download()
@@ -114,6 +117,9 @@ class auto_bbdown():
         dict = {}
         url = self.conf.get("common", "rss")
         result = requests.get(str(url))
+        if 200 != result.status_code:
+            self.log.info('请求异常')
+            return None
         r = result.content
         DOMTree = parseString(r)
         collection = DOMTree.documentElement
