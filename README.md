@@ -7,26 +7,36 @@ https://docs.rsshub.app/social-media.html#bilibili
 参考项目：https://github.com/LJason77/bilibili-webhook
 
 ## 使用步骤：
+创建挂载目录
 ```shell
 cd ~
 ```
 ```shell
-git clone https://github.com/lhiqwj173/auto_BBDown.git
+mkdir bilibili
 ```
 ```shell
-cd auto_BBDown
+mkdir bilibili_downloads
 ```
-修改config文件夹中的config.ini
-```shell
-docker build -t bbdown .
-```
-```shell
-docker run --name bbdown -itd -v ${PWD}/config:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads bbdown
-```
-其中/mnt/HARD_DRIVE/bilibili改为本地的下载目录
+根据自己的需求
 
-## 日志：
-~/auto_BBDown/config/log/
+拉取镜像
+```shell
+docker pull registry.cn-hangzhou.aliyuncs.com/lhiiqwj/auto_bbdown:latest
+```
+运行镜像
+```shell
+docker run --name bbdown -itd -v ${PWD}/bilibili:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads registry.cn-hangzhou.aliyuncs.com/lhiiqwj/auto_bbdown
+```
+其中/mnt/HARD_DRIVE/bilibili改为本地的下载目录，也就是上面创建的bilibili_downloads
+首次运行会初始化config，自行修改bilibili中的config.ini文件
+
+再次运行
+```shell
+docker start bbdown
+```
+
+## 日志文件：
+~/bilibili/log/
 
 
 ## docker 命令提示：
@@ -46,8 +56,4 @@ docker image rm $(docker image ls -a -q)
 进入容器
 ```shell
 docker exec -it bbdown /bin/bash
-```
-删除项目目录
-```shell
-rm -rf ~/auto_BBDown/
 ```
