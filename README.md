@@ -3,7 +3,7 @@
 订阅rsshub关于哔哩哔哩，然后进行愉快的下载
 https://docs.rsshub.app/social-media.html#bilibili
 
-下载部分使用：https://github.com/nilaoda/BBDown
+下载部分使用：https://github.com/nilaoda/BBDown  
 参考项目：https://github.com/LJason77/bilibili-webhook
 
 ## 使用步骤：
@@ -27,7 +27,7 @@ docker pull registry.cn-hangzhou.aliyuncs.com/lhiiqwj/auto_bbdown:latest
 ```shell
 docker run --name bbdown -itd -v ${PWD}/bilibili:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads registry.cn-hangzhou.aliyuncs.com/lhiiqwj/auto_bbdown
 ```
-其中/mnt/HARD_DRIVE/bilibili改为本地的下载目录，也就是上面创建的bilibili_downloads
+其中/mnt/HARD_DRIVE/bilibili改为本地的下载目录，也就是上面创建的bilibili_downloads  
 首次运行会初始化config，自行修改bilibili中的config.ini文件
 
 再次运行
