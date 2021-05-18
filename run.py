@@ -90,9 +90,10 @@ class auto_bbdown():
                     self.local_title.append(i.replace('.mp4',''))
                 self.del_items()
                 self.download()
+                log.info('[COMMON]下载完成等待{}秒后再次运行'.format(sleep_time))
                 time.sleep(sleep_time)
             else:
-                log.info('[COMMON]等待')
+                log.info('[COMMON]非运行时段')
                 time.sleep(sleep_time)
     def get_py_path(self):
         return os.path.split(os.path.abspath(__file__))[0]
