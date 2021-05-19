@@ -25,7 +25,7 @@ docker pull registry.cn-hangzhou.aliyuncs.com/lhiiqwj/auto_bbdown:latest
 ```
 运行镜像
 ```shell
-docker run --name bbdown -itd -v ${PWD}/bilibili:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads registry.cn-hangzhou.aliyuncs.com/lhiiqwj/auto_bbdown
+docker run --restart=always --name bbdown -itd -v ${PWD}/bilibili:/app/config -v /mnt/HARD_DRIVE/bilibili:/app/downloads registry.cn-hangzhou.aliyuncs.com/lhiiqwj/auto_bbdown
 ```
 其中/mnt/HARD_DRIVE/bilibili改为本地的下载目录，也就是上面创建的bilibili_downloads  
 首次运行会初始化config，自行修改bilibili中的config.ini文件
