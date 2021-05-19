@@ -213,7 +213,7 @@ class auto_bbdown():
                     shutil.rmtree(file_path)
                 elif os.path.isfile(file_path):
                     os.remove(file_path)
-            self.send_wechat(self, '删除文件', del_list)
+            self.send_wechat('删除文件', del_list)
 
     def download(self):
         # BBDown_path = self.conf.get("common", "BBDown_path")
@@ -234,7 +234,7 @@ class auto_bbdown():
                     path_d = os.path.join(download_path, i + '.mp4')
                 log.info('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
                 shutil.move(file_path,path_d)
-                self.send_wechat(self, '新增视频', i)
+                self.send_wechat('新增视频', i)
     @staticmethod
     def run_cmd(command):
         exitcode, output = subprocess.getstatusoutput(command)
