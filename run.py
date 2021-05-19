@@ -75,6 +75,12 @@ class auto_bbdown():
         log.debug('[COMMON]config_info:{}'.format(self.conf))
         sleep_time = int(self.conf.get("common", "sleep_time"))
         log.debug('[COMMON]休眠时间：{}'.format(sleep_time))
+        self.key = self.conf.get("common", "key")
+        if self.key:
+            log.info('[COMMON]server酱:{}'.format(self.key))
+        else:
+            log.info('[COMMON]server酱:无')
+
         while True:
             now_date = datetime.datetime.today().strftime('%Y_%m_%d')
             if now_date != start_date:
@@ -124,6 +130,8 @@ class auto_bbdown():
                 f.write(r'run_time=all' + '\n')
                 f.write(r'#运行间隔 秒' + '\n')
                 f.write(r'sleep_time=300' + '\n')
+                f.write(r'#server酱 key,用于发送微信提醒,留空则不开启微信提醒' + '\n')
+                f.write(r'key=' + '\n')
 
             sys.exit(2)
 
@@ -193,16 +201,19 @@ class auto_bbdown():
         #path = self.conf.get("common", "download_path")
         path = r'/app/downloads'
 
+        del_list = ''
         for i in self.local_data:
             title = i.replace('.mp4', '')
             if title not in self.rss_data.keys():
                 log.debug('[DEL]{}'.format(title))
                 file_path = os.path.join(path,i)
                 log.info('[DEL]删除文件:{}'.format(file_path))
+                del_list = del_list + '[DEL]{}'.format(file_path) + '\n'
                 if os.path.isdir(file_path):
                     shutil.rmtree(file_path)
                 elif os.path.isfile(file_path):
                     os.remove(file_path)
+            self.send_wechat(self, '删除文件', del_list)
 
     def download(self):
         # BBDown_path = self.conf.get("common", "BBDown_path")
@@ -223,12 +234,24 @@ class auto_bbdown():
                     path_d = os.path.join(download_path, i + '.mp4')
                 log.info('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
                 shutil.move(file_path,path_d)
+                self.send_wechat(self, '新增视频', i)
     @staticmethod
     def run_cmd(command):
         exitcode, output = subprocess.getstatusoutput(command)
         if exitcode == 0:
             return output
         os._exit(0)
+
+    # 发送微信
+    def send_wechat(self, title, content):
+        # title and content must be string.
+        if not self.key:
+            return None
+        sckey = self.key  # server酱 key
+        url = 'https://sc.ftqq.com/' + sckey + '.send'
+        data = {'text': title, 'desp': content}
+        result = requests.post(url, data)
+        return (result)
 
 if __name__ == '__main__':
     a = auto_bbdown()
