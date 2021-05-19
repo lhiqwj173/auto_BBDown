@@ -53,8 +53,7 @@ sys.excepthook = handle_exception
 
 class auto_bbdown():
     def __init__(self):
-        #self.abs_path = self.get_py_path()
-        # log = TestLog(self.abs_path,'auto_bbdown.log').getlog()
+        start_date = datetime.datetime.today().strftime('%Y_%m_%d')
 
         # 删除5天前的日志
         log.info('[COMMON]清理日志')
@@ -77,6 +76,10 @@ class auto_bbdown():
         sleep_time = int(self.conf.get("common", "sleep_time"))
         log.debug('[COMMON]休眠时间：{}'.format(sleep_time))
         while True:
+            now_date = datetime.datetime.today().strftime('%Y_%m_%d')
+            if now_date != start_date:
+                log.info('[END]重启服务')
+                sys.exit(2)
             if self.check_time():
                 log.info('[COMMON]开始运行')
                 try:
