@@ -94,6 +94,9 @@ class auto_bbdown():
                     time.sleep(30)
                     continue
                 self.local_data = self.get_local_data()
+
+                self.rss_count = len(self.rss_data)
+                self.local_count = len(self.local_data)
                 self.local_title = []
                 for i in self.local_data:
                     self.local_title.append(i.replace('.mp4',''))
@@ -214,6 +217,8 @@ class auto_bbdown():
                 elif os.path.isfile(file_path):
                     os.remove(file_path)
         if del_list:
+            del_list += '订阅数量：{}\n'.format(self.rss_count)
+            del_list += '本地数量：{}\n'.format(self.local_count)
             self.send_wechat('删除文件', del_list)
 
     def download(self):
@@ -221,6 +226,7 @@ class auto_bbdown():
         BBDown_path = r'/app/BBDown'
         # download_path = self.conf.get("common", "download_path")
         download_path = r'/app/downloads'
+        add_list = ''
         for i in self.rss_data:
             if i not in self.local_title:
                 link = self.rss_data[i]
@@ -235,7 +241,11 @@ class auto_bbdown():
                     path_d = os.path.join(download_path, i + '.mp4')
                 log.info('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
                 shutil.move(file_path,path_d)
-                self.send_wechat('新增视频', i)
+                add_list = add_list + '[ADD]{}'.format(i) + '\n'
+        if add_list:
+            add_list += '订阅数量：{}\n'.format(self.rss_count)
+            add_list += '本地数量：{}\n'.format(self.local_count)
+            self.send_wechat('新增视频', add_list)
     @staticmethod
     def run_cmd(command):
         exitcode, output = subprocess.getstatusoutput(command)
