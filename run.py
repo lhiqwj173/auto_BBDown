@@ -213,6 +213,7 @@ class auto_bbdown():
                     shutil.rmtree(file_path)
                 elif os.path.isfile(file_path):
                     os.remove(file_path)
+        if del_list:
             self.send_wechat('删除文件', del_list)
 
     def download(self):
