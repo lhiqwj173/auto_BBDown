@@ -88,15 +88,25 @@ def read_config(path: str = ''):
         log.info("[COMMON]初始化空白 config.ini，请修改后再运行：docker start bbdown")
         with open(path, 'w')as f:
             f.write(r'[common]' + '\n')
-            f.write(r'#rss链接，具体查看 https://docs.rsshub.app/social-media.html#bilibili' + '\n')
-            f.write(r'rss=' + '\n')
-            f.write(r"#运行时间段" + '\n')
             f.write(r"#run_time='03:30-06:00','12:00-13:00'" + '\n')
             f.write(r'run_time=all' + '\n')
             f.write(r'#运行间隔 秒' + '\n')
             f.write(r'sleep_time=300' + '\n')
             f.write(r'#server酱 key,用于发送微信提醒,留空则不开启微信提醒' + '\n')
             f.write(r'key=' + '\n')
+            f.write(r'[bilibili]' + '\n')
+            f.write(r"#rss链接，具体查看 https://docs.rsshub.app/social-media.html#bilibili" + '\n')
+            f.write(r'rss=' + '\n')
+            f.write(r'link_name=link' + '\n')
+            f.write(r'method=bbdown' + '\n')
+            f.write(r"#用来过滤,每个单词用','隔开,每个标题包含全部的key_word才会同步,如果不需要过滤，则填all" + '\n')
+            f.write(r'key_word=all' + '\n')
+            f.write(r'[youtube]' + '\n')
+            f.write(r'rss=' + '\n')
+            f.write(r'link_name=link' + '\n')
+            f.write(r'method=you-get' + '\n')
+            f.write(r'key_word=完整版' + '\n')
+
 
         sys.exit(2)
 
