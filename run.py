@@ -115,9 +115,17 @@ OPTIONS = {'bbdown':'-p ALL','you-get':'-o /app'}
 class base():
     def __init__(self,name, rss, link_name, method):
         self.name = name
-        self.rss = rss
-        self.link_name = link_name
-        self.method = method
+        self.rss = conf.get(self.name, "rss")
+        self.link_name = conf.get(self.name, "link_name")
+        self.method = conf.get(self.name, "method")
+        self.keyword = conf.get(self.name, "key_word")
+        if ',' in self.keyword:
+            self.keyword = self.keyword.split(',')
+        elif 'all' in self.keyword or 'ALL' in self.keyword:
+            self.keyword = ['']
+        else:
+            self.keyword = [self.keyword]
+
         self.log_name = '[' + str(self.name) + ']'
 
     def log(self,text):
@@ -202,28 +210,38 @@ class base():
             del_list += '本地数量：{}\n'.format(self.local_count)
             self.send_wechat('删除文件', del_list)
 
+    def filter_key_word(self,title):
+        for i in self.keyword:
+            if i not in title:
+                return False
+        return True
+
     def download(self):
         download_path = r'/app/downloads/' + self.name
         add_list = ''
         for i in self.rss_data:
             if i not in self.local_title:
-                link = self.rss_data[i]
-                self.log('[DOWNLOAD]下载:{}'.format(i))
-                command = METHOD_PATHS[self.method] + ' ' + OPTIONS[self.method] + ' "' + str(link) + '"'
-                self.log('[DOWNLOAD]command:{}'.format(command))
-                self.run_cmd(command)
-                file_path = os.path.join(os.getcwd(),i)
-                path_d = os.path.join(download_path,i)
-                if not os.path.exists(file_path):
-                    file_path = os.path.join(os.getcwd(), i + '.mp4')
-                    path_d = os.path.join(download_path, i + '.mp4')
-                self.log('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
-                shutil.move(file_path,path_d)
-                add_list = add_list + '[ADD]{}'.format(i) + '\n'
+                if self.filter_key_word(i):
+                    link = self.rss_data[i]
+                    self.log('[DOWNLOAD]下载:{}'.format(i))
+                    command = METHOD_PATHS[self.method] + ' ' + OPTIONS[self.method] + ' "' + str(link) + '"'
+                    self.log('[DOWNLOAD]command:{}'.format(command))
+                    self.run_cmd(command)
+                    file_path = os.path.join(os.getcwd(),i)
+                    path_d = os.path.join(download_path,i)
+                    if not os.path.exists(file_path):
+                        file_path = os.path.join(os.getcwd(), i + '.mp4')
+                        path_d = os.path.join(download_path, i + '.mp4')
+                    self.log('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
+                    shutil.move(file_path,path_d)
+                    add_list = add_list + '[ADD]{}'.format(i) + '\n'
         if add_list:
             add_list += '订阅数量：{}\n'.format(self.rss_count)
             add_list += '本地数量：{}\n'.format(self.local_count)
             self.send_wechat('新增视频', add_list)
+
+
+
     @staticmethod
     def run_cmd(command):
         exitcode, output = subprocess.getstatusoutput(command)
