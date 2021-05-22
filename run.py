@@ -267,7 +267,7 @@ if __name__ == '__main__':
     if check_time():
         for i in range(len(ITEMS)):
             if RSSS[i]:
-                a = base(name=ITEMS[i],rss=RSSS[i],link_name=LINK_NAMES[i], method=METHODS[0])
+                a = base(name=ITEMS[i],rss=RSSS[i],link_name=LINK_NAMES[i], method=METHODS[i])
                 a.run()
 
         log.info('[COMMON]下载完成等待{}秒后再次运行'.format(sleep_time))
