@@ -7,7 +7,7 @@ import subprocess
 import time, datetime
 import logging
 import re
-#TODO 订阅请求失败
+
 class TestLog(object):
     def __init__(self,log_path,log_name, logger=None):
         self.logger = logging.getLogger(logger)
@@ -51,166 +51,147 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 
-class auto_bbdown():
-    def __init__(self):
-        start_date = datetime.datetime.today().strftime('%Y_%m_%d')
+# 删除5天前的日志
+log.info('[COMMON]清理日志')
+five_day = datetime.datetime.now() - datetime.timedelta(days=5)
+# for i in os.listdir(self.abs_path):
+for i in os.listdir(r'/app/config/log'):
+    if '.log' in i:
+        log_txt = re.search(r'\d{4}_\d{2}_\d{2}', i).group(0)
+        log_date = datetime.datetime.strptime(log_txt, '%Y_%m_%d')
+        log.debug('[COMMON]log_date:{}'.format(log_date))
+        if log_date < five_day:
+            # log_path = os.path.join(self.abs_path, i)
+            log_path = os.path.join(r'/app/config/log', i)
+            log.debug('[COMMON]del_log:{}'.format(log_path))
+            os.remove(log_path)
 
-        # 删除5天前的日志
-        log.info('[COMMON]清理日志')
-        five_day = datetime.datetime.now() - datetime.timedelta(days=5)
-        # for i in os.listdir(self.abs_path):
-        for i in os.listdir(r'/app/config/log'):
-            if '.log' in i:
-                log_txt = re.search(r'\d{4}_\d{2}_\d{2}', i).group(0)
-                log_date = datetime.datetime.strptime(log_txt, '%Y_%m_%d')
-                log.debug('[COMMON]log_date:{}'.format(log_date))
-                if log_date < five_day:
-                    # log_path = os.path.join(self.abs_path, i)
-                    log_path = os.path.join(r'/app/config/log', i)
-                    log.debug('[COMMON]del_log:{}'.format(log_path))
-                    os.remove(log_path)
-
-        log.info('[COMMON]读取设置')
-        self.conf = self.read_config()
-        log.debug('[COMMON]config_info:{}'.format(self.conf))
-        sleep_time = int(self.conf.get("common", "sleep_time"))
-        log.debug('[COMMON]休眠时间：{}'.format(sleep_time))
-        self.key = self.conf.get("common", "key")
-        if self.key:
-            log.info('[COMMON]server酱:{}'.format(self.key))
+def read_config(path: str = ''):
+    log.info('读取设置')
+    if not path:
+        path = os.path.join(r'/app/config', 'config.ini')
+    log.info("[COMMON]config_path:{}".format(path))
+    if os.path.exists(path):
+        conf = configparser.ConfigParser()
+        try:
+            conf.read(path, encoding="utf-8-sig")
+        except:
+            conf.read(path, encoding="utf-8")
+        key = conf.get("common", "key")
+        if key:
+            log.info('[COMMON]server酱:{}'.format(key))
         else:
             log.info('[COMMON]server酱:无')
+        return conf,key
+    else:
+        log.info("[COMMON]Config file not found!")
+        log.info("[COMMON]初始化空白 config.ini，请修改后再运行：docker start bbdown")
+        with open(path, 'w')as f:
+            f.write(r'[common]' + '\n')
+            f.write(r'#rss链接，具体查看 https://docs.rsshub.app/social-media.html#bilibili' + '\n')
+            f.write(r'rss=' + '\n')
+            f.write(r"#运行时间段" + '\n')
+            f.write(r"#run_time='03:30-06:00','12:00-13:00'" + '\n')
+            f.write(r'run_time=all' + '\n')
+            f.write(r'#运行间隔 秒' + '\n')
+            f.write(r'sleep_time=300' + '\n')
+            f.write(r'#server酱 key,用于发送微信提醒,留空则不开启微信提醒' + '\n')
+            f.write(r'key=' + '\n')
 
+        sys.exit(2)
+
+conf, key = read_config()
+sleep_time = int(conf.get("common", "sleep_time"))
+log.debug('休眠时间：{}'.format(sleep_time))
+start_date = datetime.datetime.today().strftime('%Y_%m_%d')
+
+ITEMS = [i for i in conf.sections() if i != 'common']
+RSSS = [conf.get(i, "rss") for i in ITEMS]
+LINK_NAMES = [conf.get(i, "link_name") for i in ITEMS]
+METHODS = [conf.get(i, "method") for i in ITEMS]
+METHOD_PATHS = {'bbdown':r'/app/BBDown','you-get':'you-get'}
+OPTIONS = {'bbdown':'-p ALL','you-get':'-o /app'}
+
+class base():
+    def __init__(self,name, rss, link_name, method):
+        self.name = name
+        self.rss = rss
+        self.link_name = link_name
+        self.method = method
+        self.log_name = '[' + str(self.name) + ']'
+
+    def log(self,text):
+        log.info(self.log_name + str(text))
+
+    def run(self):
+        self.if_restart()
+        self.log('开始运行')
         while True:
-            now_date = datetime.datetime.today().strftime('%Y_%m_%d')
-            if now_date != start_date:
-                log.info('[END]重启服务')
-                sys.exit(2)
-            if self.check_time():
-                log.info('[COMMON]开始运行')
-                try:
-                    self.rss_data = self.get_rss_data()
-                except:
-                    time.sleep(30)
-                    continue
-                self.local_data = self.get_local_data()
-
-                self.rss_count = len(self.rss_data)
-                self.local_count = len(self.local_data)
-                self.local_title = []
-                for i in self.local_data:
-                    self.local_title.append(i.replace('.mp4',''))
-                self.del_items()
-                self.download()
-                log.info('[COMMON]下载完成等待{}秒后再次运行'.format(sleep_time))
-                time.sleep(sleep_time)
-            else:
-                log.info('[COMMON]非运行时段')
-                time.sleep(sleep_time)
-    def get_py_path(self):
-        return os.path.split(os.path.abspath(__file__))[0]
-
-    def read_config(self,path: str = ''):
-        if not path:
-            path = os.path.join(r'/app/config', 'config.ini')
-        log.info("[COMMON]config_path:{}".format(path))
-        if os.path.exists(path):
-            conf = configparser.ConfigParser()
             try:
-                conf.read(path, encoding="utf-8-sig")
+                self.rss_data = self.get_rss_data()
+                break
             except:
-                conf.read(path, encoding="utf-8")
-            return conf
-        else:
-            log.info("[COMMON]Config file not found!")
-            log.info("[COMMON]初始化空白 config.ini，请修改后再运行：docker start bbdown")
-            with open(path,'w')as f:
-                f.write(r'[common]' + '\n')
-                f.write(r'#rss链接，具体查看 https://docs.rsshub.app/social-media.html#bilibili' + '\n')
-                f.write(r'rss=' + '\n')
-                f.write(r"#运行时间段" + '\n')
-                f.write(r"#run_time='03:30-06:00','12:00-13:00'" + '\n')
-                f.write(r'run_time=all' + '\n')
-                f.write(r'#运行间隔 秒' + '\n')
-                f.write(r'sleep_time=300' + '\n')
-                f.write(r'#server酱 key,用于发送微信提醒,留空则不开启微信提醒' + '\n')
-                f.write(r'key=' + '\n')
+                time.sleep(30)
+                continue
+        self.local_data = self.get_local_data()
 
+        self.rss_count = len(self.rss_data)
+        self.local_count = len(self.local_data)
+
+        self.local_title = []
+        for i in self.local_data:
+            self.local_title.append(i.replace('.mp4',''))
+
+        self.del_items()
+        self.download()
+        self.log('{}下载完成'.format(self.log_name))
+
+    def if_restart(self):
+        now_date = datetime.datetime.today().strftime('%Y_%m_%d')
+        if now_date != start_date:
+            self.log('[END]重启服务')
             sys.exit(2)
-
-    def check_time(self):
-        run_time = self.conf.get("common", "run_time")
-        if ',' in run_time:
-            run_time_list = run_time.split(',')
-        elif 'all' == run_time or 'ALL' == run_time:
-            run_time_list = ['00:00-23:59']
-        else:
-            run_time_list = [run_time]
-        log.debug('[CHECKTIME]运行时间设定：{}'.format(str(run_time_list)))
-        n_time = datetime.datetime.now()
-        log.debug('[CHECKTIME]now_time：{}'.format(n_time))
-        for i in run_time_list:
-            l = i.split('-')
-            log.debug('str(l)')
-            time_b = datetime.datetime.strptime(str(datetime.datetime.now().date()) + l[0].replace("'",''), '%Y-%m-%d%H:%M')
-            time_e = datetime.datetime.strptime(str(datetime.datetime.now().date()) + l[1].replace("'",''), '%Y-%m-%d%H:%M')
-            if time_b < n_time < time_e:
-                return True
-
-        return False
-
 
     def get_rss_data(self):
         dict = {}
-        url = self.conf.get("common", "rss")
-        result = requests.get(str(url))
-        if 200 != result.status_code:
-            log.info('[RSS_DATA]请求异常')
-            return None
+        result = requests.get(str(self.rss))
         r = result.content
         DOMTree = parseString(r)
         collection = DOMTree.documentElement
         VariationChilds = collection.getElementsByTagName("item")
         # 进行遍历取值
         for VariationChild in VariationChilds:
-            log.info('=' * 30)
+            self.log('=' * 30)
             title = VariationChild.getElementsByTagName('title')[0].childNodes[0].data
-
-            link = VariationChild.getElementsByTagName('link')[0].childNodes[0].data
-            #     description = description.getElementsByTagName('link')
-
-            author = VariationChild.getElementsByTagName('author')[0].childNodes[0].data
+            link = VariationChild.getElementsByTagName(self.link_name)[0].childNodes[0].data
 
             dict[title] = link
 
-            log.info('[RSS_DATA]title:{}'.format(title))
-            log.info('[RSS_DATA]link:{}'.format(link))
-            log.info('[RSS_DATA]author:{}'.format(author))
+            self.log('[RSS_DATA]title:{}'.format(title))
+            self.log('[RSS_DATA]link:{}'.format(link))
 
         return dict
 
     def get_local_data(self):
-        #path = self.conf.get("common", "download_path")
-        path = r'/app/downloads'
+        path = r'/app/downloads/' + self.name
+        if not os.path.exists(path):
+            os.mkdir(path)
         files = os.listdir(path)
         if len(files) > 0:
             for i in files:
-                log.info('[LOCAL_DATA]{}'.format(i))
+                self.log('[LOCAL_DATA]{}'.format(i))
             return files
         else:
             return []
 
     def del_items(self):
-        #path = self.conf.get("common", "download_path")
-        path = r'/app/downloads'
+        path = r'/app/downloads/' + self.name
 
         del_list = ''
-        for i in self.local_data:
-            title = i.replace('.mp4', '')
-            if title not in self.rss_data.keys():
-                log.debug('[DEL]{}'.format(title))
+        for i in self.local_title:
+            if i not in self.rss_data.keys():
                 file_path = os.path.join(path,i)
-                log.info('[DEL]删除文件:{}'.format(file_path))
+                self.log('[DEL]删除文件:{}'.format(file_path))
                 del_list = del_list + '[DEL]{}'.format(file_path) + '\n'
                 if os.path.isdir(file_path):
                     shutil.rmtree(file_path)
@@ -222,24 +203,21 @@ class auto_bbdown():
             self.send_wechat('删除文件', del_list)
 
     def download(self):
-        # BBDown_path = self.conf.get("common", "BBDown_path")
-        BBDown_path = r'/app/BBDown'
-        # download_path = self.conf.get("common", "download_path")
-        download_path = r'/app/downloads'
+        download_path = r'/app/downloads/' + self.name
         add_list = ''
         for i in self.rss_data:
             if i not in self.local_title:
                 link = self.rss_data[i]
-                log.info('[DOWNLOAD]下载:{}'.format(i))
-                command = str(BBDown_path) + ' -p ALL "' + str(link) + '"'
-                log.info('[DOWNLOAD]command:{}'.format(command))
+                self.log('[DOWNLOAD]下载:{}'.format(i))
+                command = METHOD_PATHS[self.method] + ' ' + OPTIONS[self.method] + ' "' + str(link) + '"'
+                self.log('[DOWNLOAD]command:{}'.format(command))
                 self.run_cmd(command)
                 file_path = os.path.join(os.getcwd(),i)
                 path_d = os.path.join(download_path,i)
                 if not os.path.exists(file_path):
                     file_path = os.path.join(os.getcwd(), i + '.mp4')
                     path_d = os.path.join(download_path, i + '.mp4')
-                log.info('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
+                self.log('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
                 shutil.move(file_path,path_d)
                 add_list = add_list + '[ADD]{}'.format(i) + '\n'
         if add_list:
@@ -264,5 +242,36 @@ class auto_bbdown():
         result = requests.post(url, data)
         return (result)
 
+def check_time():
+    run_time = conf.get("common", "run_time")
+    if ',' in run_time:
+        run_time_list = run_time.split(',')
+    elif 'all' == run_time or 'ALL' == run_time:
+        run_time_list = ['00:00-23:59']
+    else:
+        run_time_list = [run_time]
+    log.debug('[CHECKTIME]运行时间设定：{}'.format(str(run_time_list)))
+    n_time = datetime.datetime.now()
+    log.debug('[CHECKTIME]now_time：{}'.format(n_time))
+    for i in run_time_list:
+        l = i.split('-')
+        log.debug('str(l)')
+        time_b = datetime.datetime.strptime(str(datetime.datetime.now().date()) + l[0].replace("'",''), '%Y-%m-%d%H:%M')
+        time_e = datetime.datetime.strptime(str(datetime.datetime.now().date()) + l[1].replace("'",''), '%Y-%m-%d%H:%M')
+        if time_b < n_time < time_e:
+            return True
+    return False
+
 if __name__ == '__main__':
-    a = auto_bbdown()
+
+    if check_time():
+        for i in range(len(ITEMS)):
+            if RSSS[i]:
+                a = base(name=ITEMS[i],rss=RSSS[i],link_name=LINK_NAMES[i], method=METHODS[0])
+                a.run()
+
+        log.info('[COMMON]下载完成等待{}秒后再次运行'.format(sleep_time))
+        time.sleep(sleep_time)
+    else:
+        log.info('[COMMON]非运行时段')
+        time.sleep(sleep_time)
