@@ -129,8 +129,8 @@ ITEMS = [i for i in conf.sections() if i != 'common']
 RSSS = [conf.get(i, "rss") for i in ITEMS]
 LINK_NAMES = [conf.get(i, "link_name") for i in ITEMS]
 METHODS = [conf.get(i, "method") for i in ITEMS]
-METHOD_PATHS = {'bbdown':r'/app/BBDown','you-get':'you-get'}
-OPTIONS = {'bbdown':'-p ALL','you-get':'-o /app'}
+METHOD_PATHS = {'bbdown':r'/app/BBDown','you-get':'you-get','youtube-dl':'youtube-dl'}
+OPTIONS = {'bbdown':'-p ALL','you-get':'-o /app','youtube-dl':None}
 
 class base():
     def __init__(self,name, rss, link_name, method):
@@ -151,6 +151,12 @@ class base():
             self.keyword = [self.keyword]
 
         self.log_name = '[' + str(self.name) + ']'
+
+        self.log('rss:{}'.format(self.rss))
+        self.log('link_name:{}'.format(self.link_name))
+        self.log('method:{}'.format(self.method))
+        self.log('day:{}'.format(self.day))
+        self.log('if_del:{}'.format(self.if_del))
 
     def log(self,text):
         log.info(self.log_name + str(text))
@@ -195,17 +201,21 @@ class base():
         VariationChilds = collection.getElementsByTagName("item")
         # 进行遍历取值
         for VariationChild in VariationChilds:
-            self.log('=' * 30)
+
             title = VariationChild.getElementsByTagName('title')[0].childNodes[0].data
             link = VariationChild.getElementsByTagName(self.link_name)[0].childNodes[0].data
-            pubDate = VariationChild.getElementsByTagName(self.link_name)[0].childNodes[0].data
+            pubDate = VariationChild.getElementsByTagName('pubDate')[0].childNodes[0].data
             pubDate = parse(pubDate)
 
             if self.day>0 and (self.now_dt-datetime.timedelta(days=self.day) > pubDate):
                 continue
 
+            if not self.filter_key_word(title):
+                continue
+
             dict[title] = link
 
+            self.log('=' * 30)
             self.log('[RSS_DATA]title:{}'.format(title))
             self.log('[RSS_DATA]link:{}'.format(link))
 
@@ -252,20 +262,23 @@ class base():
         add_list = ''
         for i in self.rss_data:
             if i not in self.local_title:
-                if self.filter_key_word(i):
-                    link = self.rss_data[i]
-                    self.log('[DOWNLOAD]下载:{}'.format(i))
+                link = self.rss_data[i]
+                self.log('[DOWNLOAD]下载:{}'.format(i))
+                options = OPTIONS[self.method]
+                if options:
                     command = METHOD_PATHS[self.method] + ' ' + OPTIONS[self.method] + ' "' + str(link) + '"'
-                    self.log('[DOWNLOAD]command:{}'.format(command))
-                    self.run_cmd(command)
-                    file_path = os.path.join(os.getcwd(),i)
-                    path_d = os.path.join(download_path,i)
-                    if not os.path.exists(file_path):
-                        file_path = os.path.join(os.getcwd(), i + '.mp4')
-                        path_d = os.path.join(download_path, i + '.mp4')
-                    self.log('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
-                    shutil.move(file_path,path_d)
-                    add_list = add_list + '[ADD]{}'.format(i) + '\n'
+                else:
+                    command = METHOD_PATHS[self.method] + ' "' + str(link) + '"'
+                self.log('[DOWNLOAD]command:{}'.format(command))
+                self.run_cmd(command)
+                file_path = os.path.join(os.getcwd(),i)
+                path_d = os.path.join(download_path,i)
+                if not os.path.exists(file_path):
+                    file_path = os.path.join(os.getcwd(), i + '.mp4')
+                    path_d = os.path.join(download_path, i + '.mp4')
+                self.log('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
+                shutil.move('"' + file_path + '"','"' + path_d + '"')
+                add_list = add_list + '[ADD]{}'.format(i) + '\n'
         if add_list:
             add_list += '订阅数量：{}\n'.format(self.rss_count)
             add_list += '本地数量：{}\n'.format(self.local_count)
