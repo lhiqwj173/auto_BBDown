@@ -115,7 +115,7 @@ def read_config(path: str = ''):
             f.write(r'method=you-get' + '\n')
             f.write(r'day=1' + '\n')
             f.write(r'key_word=完整版' + '\n')
-            f.write(r'day=1' + '\n')
+            f.write(r'if_del=0' + '\n')
 
 
         sys.exit(2)
