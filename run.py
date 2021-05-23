@@ -7,6 +7,8 @@ import subprocess
 import time, datetime
 import logging
 import re
+from dateutil.parser import parse
+import pytz
 
 class TestLog(object):
     def __init__(self,log_path,log_name, logger=None):
@@ -101,13 +103,19 @@ def read_config(path: str = ''):
             f.write(r'link_name=link' + '\n')
             f.write(r'#下载方式，目前b站使用bbdown，youtube使用you-get' + '\n')
             f.write(r'method=bbdown' + '\n')
+            f.write(r'#同步时间 天，设置为1则只下载一天内更新的视频,0为全部更新' + '\n')
+            f.write(r'day=0' + '\n')
             f.write(r"#用来过滤,每个单词用','隔开,每个标题包含全部的key_word才会同步,如果不需要过滤，则填all" + '\n')
             f.write(r'key_word=all' + '\n')
+            f.write(r'#是否进行删除操作' + '\n')
+            f.write(r'if_del=1' + '\n')
             f.write(r'[youtube]' + '\n')
             f.write(r'rss=' + '\n')
             f.write(r'link_name=link' + '\n')
             f.write(r'method=you-get' + '\n')
+            f.write(r'day=1' + '\n')
             f.write(r'key_word=完整版' + '\n')
+            f.write(r'day=1' + '\n')
 
 
         sys.exit(2)
@@ -126,10 +134,14 @@ OPTIONS = {'bbdown':'-p ALL','you-get':'-o /app'}
 
 class base():
     def __init__(self,name, rss, link_name, method):
+        self.now_dt = datetime.datetime.now().replace(tzinfo=pytz.UTC)
         self.name = name
         self.rss = conf.get(self.name, "rss")
         self.link_name = conf.get(self.name, "link_name")
         self.method = conf.get(self.name, "method")
+        self.day = int(conf.get(self.name, "day"))
+        self.if_del = int(conf.get(self.name, "if_del"))
+
         self.keyword = conf.get(self.name, "key_word")
         if ',' in self.keyword:
             self.keyword = self.keyword.split(',')
@@ -162,7 +174,9 @@ class base():
         for i in self.local_data:
             self.local_title.append(i.replace('.mp4',''))
 
-        self.del_items()
+        if self.if_del:
+            self.del_items()
+
         self.download()
         self.log('{}下载完成'.format(self.log_name))
 
@@ -184,6 +198,11 @@ class base():
             self.log('=' * 30)
             title = VariationChild.getElementsByTagName('title')[0].childNodes[0].data
             link = VariationChild.getElementsByTagName(self.link_name)[0].childNodes[0].data
+            pubDate = VariationChild.getElementsByTagName(self.link_name)[0].childNodes[0].data
+            pubDate = parse(pubDate)
+
+            if self.day>0 and (self.now_dt-datetime.timedelta(days=self.day) > pubDate):
+                continue
 
             dict[title] = link
 
