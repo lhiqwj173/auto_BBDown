@@ -296,9 +296,9 @@ class base():
     # 发送微信
     def send_wechat(self, title, content):
         # title and content must be string.
-        if not self.key:
+        if not key:
             return None
-        sckey = self.key  # server酱 key
+        sckey = key  # server酱 key
         url = 'https://sc.ftqq.com/' + sckey + '.send'
         data = {'text': title, 'desp': content}
         result = requests.post(url, data)
