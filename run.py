@@ -237,9 +237,10 @@ class base():
         path = r'/app/downloads/' + self.name
 
         del_list = ''
-        for i in self.local_title:
+        for idx, i in enumerate(self.local_title):
             if i not in self.rss_data.keys():
-                file_path = os.path.join(path,i)
+                file_name = self.local_data[idx]
+                file_path = os.path.join(path,file_name)
                 self.log('[DEL]删除文件:{}'.format(file_path))
                 del_list = del_list + '[DEL]{}'.format(file_path) + '\n'
                 if os.path.isdir(file_path):
