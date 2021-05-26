@@ -277,7 +277,7 @@ class base():
                     file_path = os.path.join(os.getcwd(), i + '.mp4')
                     path_d = os.path.join(download_path, i + '.mp4')
                 self.log('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
-                shutil.move('"' + file_path + '"','"' + path_d + '"')
+                shutil.move(file_path,path_d)
                 add_list = add_list + '[ADD]{}'.format(i) + '\n'
         if add_list:
             add_list += '订阅数量：{}\n'.format(self.rss_count)
