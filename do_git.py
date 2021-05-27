@@ -44,7 +44,7 @@ r = Git("C:/Users/chenh/PycharmProjects/auto_BBDown/")
 def get_com_dict(r,origin=False):
     if origin:
         r.execute('git fetch', shell=True)
-        aa = r.execute('git log origin -3', shell=True)
+        aa = r.execute('git log remotes/origin/master -3', shell=True)
     else:
         try:
             r.execute('git add .', shell=True)
