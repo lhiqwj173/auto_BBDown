@@ -2,3 +2,4 @@ config.ini
 Dockerfile
 /config
 README.md
+do_git.py
