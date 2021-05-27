@@ -29,13 +29,22 @@ except:
     except:
         os._exit(0)
 from dateutil.parser import parse
-msg = 'pycharm'
+
+import platform
+
+if 'Windows' == platform.system():
+    msg = 'pycharm'
+    r = Git("C:/Users/chenh/PycharmProjects/auto_BBDown/")
+
+else:
+    print('请指定平台信息')
+    os._exit(0)
 
 
 # In[2]:
 
 
-r = Git("C:/Users/chenh/PycharmProjects/auto_BBDown/")
+
 
 
 # In[3]:
