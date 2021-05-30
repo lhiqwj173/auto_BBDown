@@ -272,11 +272,24 @@ class base():
                     command = METHOD_PATHS[self.method] + ' "' + str(link) + '"'
                 self.log('[DOWNLOAD]command:{}'.format(command))
                 self.run_cmd(command)
-                file_path = os.path.join(os.getcwd(),i)
-                path_d = os.path.join(download_path,i)
-                if not os.path.exists(file_path):
-                    file_path = os.path.join(os.getcwd(), i + '.mp4')
-                    path_d = os.path.join(download_path, i + '.mp4')
+
+                file_name = ''
+                is_file = True
+                for file in os.listdir():
+                    if i in file:
+                        file_name = file
+                        break
+
+                file_path = os.path.join(os.getcwd(),file_name)
+
+                if os.path.isdir(file_path):
+                    path_d = os.path.join(download_path,i)
+                elif os.path.isfile(file_path):
+                    path_d = os.path.join(download_path, i) + os.path.splitext(file_name)[1]
+
+                # if not os.path.exists(file_path):
+                #     file_path = os.path.join(os.getcwd(), i + '.mp4')
+                #     path_d = os.path.join(download_path, i + '.mp4')
                 self.log('[DOWNLOAD]移动:{} --> {}'.format(file_path,path_d))
                 shutil.move(file_path,path_d)
                 add_list = add_list + '[ADD]{}'.format(i) + '\n'
